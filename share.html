@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Condividi immagine</title>
+  <title>Share Image</title>
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -58,10 +58,10 @@
   </style>
 </head>
 <body>
-  <h1>Condividi immagine</h1>
-  <button id="share" class="primary" disabled>Condividi</button>
-  <button id="download" class="secondary" disabled>Scarica immagine</button>
-  <div id="status" class="status">Attendo il file dal plugin Photopea...</div>
+  <h1>Share Image</h1>
+  <button id="share" class="primary" disabled>Share</button>
+  <button id="download" class="secondary" disabled>Download Image</button>
+  <div id="status" class="status">Waiting for the file from the Photopea plugin...</div>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -88,16 +88,16 @@
 
     async function shareFile() {
       if (!file) return;
-      const data = { files: [file], title: file.name, text: 'Immagine esportata da Photopea' };
+      const data = { files: [file], title: file.name, text: 'Image exported from Photopea' };
       try {
         if (navigator.share && (!navigator.canShare || navigator.canShare(data))) {
           await navigator.share(data);
-          setStatus(`Condivisione avviata:\n${file.name}`);
+          setStatus(`Sharing started:\n${file.name}`);
         } else {
-          setStatus('Questo browser non consente la condivisione diretta di questo file. Usa il download.');
+          setStatus('This browser does not support direct sharing for this file. Use the download option.');
         }
       } catch (err) {
-        //setStatus(`Condivisione non riuscita: ${err && err.message ? err.message : err}\n\nPuoi usare il download come fallback.`);
+        //setStatus(`Sharing failed: ${err && err.message ? err.message : err}\n\nYou can use the download option as a fallback.`);
       }
     }
 
@@ -107,16 +107,16 @@
         file = event.data.file;
         $('share').disabled = false;
         setupDownload();
-        setStatus(`File pronto:\n${file.name}\n${Math.round(file.size / 1024)} KB`);
+        setStatus(`File ready:\n${file.name}\n${Math.round(file.size / 1024)} KB`);
 
         if (event.data.autoShare) {
           try {
             await shareFile();
             return;
           } catch (e) {
-            // fallback: lascia il pulsante visibile
+            // Fallback: keep the button visible.
           }
-          setStatus(`File pronto:\n${file.name}\n\nPremi “Condividi” se il menu non si è aperto automaticamente.`);
+          setStatus(`File ready:\n${file.name}\n\nPress “Share” if the menu did not open automatically.`);
         }
       }
     });
@@ -126,7 +126,7 @@
     if (window.opener) {
       window.opener.postMessage('PHOTOPEA_SHARE_POPUP_READY', window.location.origin);
     } else {
-      setStatus('Questa finestra deve essere aperta dal plugin Photopea.');
+      setStatus('This window must be opened by the Photopea plugin.');
     }
   </script>
 </body>
