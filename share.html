@@ -94,10 +94,10 @@
           await navigator.share(data);
           setStatus(`Condivisione avviata:\n${file.name}`);
         } else {
-          setStatus('Questo browser non consente la condivisione diretta di questo file. Usa il download come fallback.');
+          setStatus('Questo browser non consente la condivisione diretta di questo file. Usa il download.');
         }
       } catch (err) {
-        setStatus(`Condivisione non riuscita: ${err && err.message ? err.message : err}\n\nPuoi usare il download come fallback.`);
+        //setStatus(`Condivisione non riuscita: ${err && err.message ? err.message : err}\n\nPuoi usare il download come fallback.`);
       }
     }
 

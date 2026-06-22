@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -65,10 +65,6 @@
       background: #111827;
       color: #ffffff;
     }
-    .secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
     .status {
       margin-top: 14px;
       padding: 12px 14px;
@@ -85,20 +81,19 @@
   </style>
 </head>
 <body>
-  <h1>Condividi immagine</h1>
+  <h1>Share Image</h1>
 
-  <label for="format">Formato</label>
+  <label for="format">Format</label>
   <select id="format">
-    <option value="jpg">JPG - leggero</option>
-    <option value="png">PNG - qualità piena / trasparenza</option>
-    <option value="webp">WEBP - leggero moderno</option>
+    <option value="jpg">JPG</option>
+    <option value="png">PNG</option>
+    <option value="webp">WEBP</option>
   </select>
 
-  <button id="shareNow" class="primary">Condividi immagine</button>
-  <button id="download" class="secondary" disabled>Scarica immagine</button>
+  <button id="shareNow" class="primary">Share</button>
 
-  <div id="status" class="status">Apri un documento in Photopea, poi premi “Condividi immagine”. Il nome file verrà preso automaticamente dal documento.</div>
-  <p class="hint">Se il browser blocca la condivisione diretta dentro Photopea, il plugin apre automaticamente una finestra dedicata oppure abilita il download.</p>
+  <div id="status" class="status"></div>
+  <p class="hint">If the browser blocks direct sharing within Photopea, the plugin automatically opens a dedicated window.</p>
 
   <script>
     const formats = {
@@ -111,7 +106,6 @@
 
     let pendingFormat = null;
     let preparedFile = null;
-    let preparedBlobUrl = null;
     let pendingAction = null;
     let sharePopup = null;
     let pendingDocumentName = null;
@@ -146,35 +140,15 @@
     function resetPrepared() {
       preparedFile = null;
       pendingDocumentName = null;
-      $('download').disabled = true;
-      $('download').onclick = null;
-      if (preparedBlobUrl) {
-        URL.revokeObjectURL(preparedBlobUrl);
-        preparedBlobUrl = null;
-      }
-    }
-
-    function setupDownload(blob, fileName) {
-      if (preparedBlobUrl) URL.revokeObjectURL(preparedBlobUrl);
-      preparedBlobUrl = URL.createObjectURL(blob);
-      $('download').disabled = false;
-      $('download').onclick = () => {
-        const link = document.createElement('a');
-        link.href = preparedBlobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      };
     }
 
     function canShareFile(file) {
-      const data = { files: [file], title: file.name, text: 'Immagine esportata da Photopea' };
+      const data = { files: [file], title: file.name, text: 'Image exported from Photopea' };
       return !!(navigator.share && (!navigator.canShare || navigator.canShare(data)));
     }
 
     async function shareFileDirect(file) {
-      const data = { files: [file], title: file.name, text: 'Immagine esportata da Photopea' };
+      const data = { files: [file], title: file.name, text: 'Image exported from Photopea' };
       await navigator.share(data);
     }
 
@@ -198,7 +172,7 @@
       pendingFormat = currentFormat();
       pendingAction = 'share';
       $('shareNow').disabled = true;
-      setStatus('Leggo il nome del documento ed esporto da Photopea...');
+      setStatus('Reading the document name and exporting from Photopea...');
 
       // Apriamo subito il popup con il gesto utente disponibile.
       ensurePopup();
@@ -214,17 +188,16 @@
       window.parent.postMessage(script, '*');
     }
 
-    async function onPrepared(file, blob) {
+    async function onPrepared(file) {
       preparedFile = file;
-      setupDownload(blob, file.name);
 
       if (pendingAction === 'share') {
-        setStatus(`Immagine pronta: ${file.name}\nApro la condivisione...`);
+        setStatus(`Image ready: ${file.name}\nOpening the share menu...`);
 
         if (canShareFile(file)) {
           try {
             await shareFileDirect(file);
-            setStatus(`Condivisione avviata:\n${file.name}`);
+            setStatus(`Sharing started:\n${file.name}`);
             return;
           } catch (err) {
             // fallback popup
@@ -234,18 +207,18 @@
         const popup = ensurePopup();
         if (!popup) {
           $('shareNow').disabled = false;
-          setStatus(`Immagine pronta: ${file.name}\nIl browser ha bloccato la finestra di condivisione. Usa “Scarica immagine”.`);
+          setStatus(`Image ready: ${file.name}\nThe browser blocked the sharing window. Allow pop-ups and try again.`);
           return;
         }
 
         sendFileToPopup();
         $('shareNow').disabled = false;
-        setStatus(`Immagine pronta: ${file.name}\nSe non si apre subito il menu di condivisione, usa il pulsante nella finestra popup.`);
+        setStatus(`Image ready: ${file.name}\nIf the share menu does not open immediately, use the button in the pop-up window.`);
         return;
       }
 
       $('shareNow').disabled = false;
-      setStatus(`Immagine pronta:\n${file.name}`);
+      setStatus(`Image ready:\n${file.name}`);
     }
 
     window.addEventListener('message', async (event) => {
@@ -259,13 +232,13 @@
       if (typeof data === 'string') {
         if (data.startsWith('PHOTOPEA_SHARE_DOCNAME:')) {
           pendingDocumentName = data.replace('PHOTOPEA_SHARE_DOCNAME:', '') || 'photopea-export';
-          setStatus(`Documento: ${pendingDocumentName}\nEsporto da Photopea...`);
+          setStatus(`Document: ${pendingDocumentName}\nExporting from Photopea...`);
           return;
         }
 
         if (data.startsWith('PHOTOPEA_SHARE_ERROR:')) {
           $('shareNow').disabled = false;
-          setStatus('Errore Photopea: ' + data.replace('PHOTOPEA_SHARE_ERROR:', ''));
+          setStatus('Photopea error: ' + data.replace('PHOTOPEA_SHARE_ERROR:', ''));
         }
         return;
       }
@@ -273,7 +246,7 @@
       if (data instanceof ArrayBuffer) {
         if (!pendingFormat) {
           $('shareNow').disabled = false;
-          setStatus('Ho ricevuto un file da Photopea, ma non conosco il formato richiesto. Riprova.');
+          setStatus('A file was received from Photopea, but the requested format is unknown. Try again.');
           return;
         }
 
@@ -281,7 +254,7 @@
         const baseName = sanitizeName(pendingDocumentName || 'photopea-export');
         const fileName = `${baseName}-${timestamp()}.${pendingFormat.ext}`;
         const file = new File([blob], fileName, { type: pendingFormat.mime, lastModified: Date.now() });
-        await onPrepared(file, blob);
+        await onPrepared(file);
       }
     });
 
