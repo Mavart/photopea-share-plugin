@@ -22,9 +22,8 @@ Plugin per Photopea che esporta il documento attivo in PNG / JPG / WEBP e prova 
 1. Apri o crea un documento in Photopea.
 2. Apri il plugin `Share Image`.
 3. Scegli il formato.
-4. Premi `1. Prepara immagine da Photopea`.
-5. Quando il file è pronto, premi `2. Condividi ora`.
-6. Se il browser blocca la condivisione dentro il pannello, usa `Apri finestra di condivisione` e poi premi `Condividi` nella nuova finestra.
+4. Premi `CONDIVIDI`: il plugin esporta il documento e apre automaticamente la condivisione.
+5. Se il browser blocca la condivisione dentro il pannello, il file viene scaricato automaticamente come fallback.
 
 ## Limiti tecnici
 
