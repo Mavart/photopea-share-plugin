@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Condividi immagine</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; padding: 20px; font-size: 15px; line-height: 1.45; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    button { width: 100%; box-sizing: border-box; font: inherit; border-radius: 10px; padding: 12px; margin-top: 12px; border: 0; cursor: pointer; font-weight: 700; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .primary { background: #111; color: #fff; }
+    .secondary { background: color-mix(in srgb, currentColor 12%, transparent); color: inherit; }
+    .status { margin-top: 12px; padding: 12px; border-radius: 10px; background: color-mix(in srgb, currentColor 8%, transparent); white-space: pre-wrap; }
+    @media (prefers-color-scheme: dark) { .primary { background: #fff; color: #111; } }
+  </style>
+</head>
+<body>
+  <h1>Condividi immagine</h1>
+  <button id="share" class="primary" disabled>Condividi</button>
+  <button id="download" class="secondary" disabled>Scarica come fallback</button>
+  <div id="status" class="status">Attendo il file dal plugin Photopea...</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let file = null;
+    let blobUrl = null;
+
+    function setStatus(message) { $('status').textContent = message; }
+
+    function setupDownload() {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = URL.createObjectURL(file);
+      $('download').disabled = false;
+      $('download').onclick = () => {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+    }
+
+    async function shareFile() {
+      if (!file) return;
+      const data = { files: [file], title: file.name, text: 'Immagine esportata da Photopea' };
+      try {
+        if (navigator.canShare && navigator.canShare(data)) {
+          await navigator.share(data);
+          setStatus(`Condivisione avviata:\n${file.name}`);
+        } else {
+          setStatus('Questo browser non consente la condivisione diretta di questo file. Usa il download fallback.');
+        }
+      } catch (err) {
+        setStatus(`Condivisione non riuscita: ${err && err.message ? err.message : err}\n\nPuoi usare il download fallback.`);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data && event.data.type === 'PHOTOPEA_SHARE_FILE' && event.data.file) {
+        file = event.data.file;
+        $('share').disabled = false;
+        setupDownload();
+        setStatus(`File pronto:\n${file.name}\n${Math.round(file.size / 1024)} KB\n\nPremi “Condividi”.`);
+      }
+    });
+
+    $('share').addEventListener('click', shareFile);
+
+    if (window.opener) {
+      window.opener.postMessage('PHOTOPEA_SHARE_POPUP_READY', window.location.origin);
+    } else {
+      setStatus('Questa finestra deve essere aperta dal plugin Photopea.');
+    }
+  </script>
+</body>
+</html>
